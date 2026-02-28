@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Portfolio" />
+  <meta name="theme-color" content="#0d0f14" />
+  <title>Portfolio Dashboard</title>
+
+  <!-- PWA Manifest inline -->
+  <link rel="manifest" href="data:application/json,{
+    %22name%22:%22Portfolio%20Dashboard%22,
+    %22short_name%22:%22Portfolio%22,
+    %22start_url%22:%22.%22,
+    %22display%22:%22standalone%22,
+    %22background_color%22:%22%230d0f14%22,
+    %22theme_color%22:%22%230d0f14%22,
+    %22icons%22:[]
+  }">
+
+  <!-- Apple Touch Icon (inline SVG as data URI) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230d0f14'/%3E%3Ctext x='90' y='115' font-size='90' text-anchor='middle' fill='%23e8b84b'%3E📈%3C/text%3E%3C/svg%3E">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+      --bg: #0d0f14;
+      --surface: #131720;
+      --border: #1e2535;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --gold: #e8b84b;
+      --green: #34d399;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --purple: #818cf8;
+      --orange: #fb923c;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    body {
+      font-family: -apple-system, 'SF Pro Display', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: calc(var(--safe-top) + 16px) 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-inner { display: flex; justify-content: space-between; align-items: center; }
+    .header-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 2px; }
+    .header-title { font-size: 1.3rem; font-weight: 400; color: var(--text); }
+    .header-title span { color: var(--gold); }
+    .header-date { font-size: 0.75rem; color: var(--muted); text-align: right; }
+
+    /* NAV */
+    .nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 73px;
+      z-index: 40;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      flex: 1;
+      min-width: 80px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      padding: 12px 8px;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+    .nav-btn.active { border-bottom-color: var(--gold); color: var(--gold); }
+
+    /* CONTENT */
+    .content { padding: 20px 16px calc(var(--safe-bottom) + 20px); max-width: 900px; margin: 0 auto; }
+
+    /* CARDS */
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .kpi-label { font-size: 0.55rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-value { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+    .kpi-sub { font-size: 0.65rem; color: var(--muted); }
+
+    .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .split-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .split-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
+    .split-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .split-row-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+    .split-row-val { font-size: 0.75rem; font-weight: 600; }
+
+    .perf-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .perf-title { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px; }
+    .perf-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .perf-row:last-child { border-bottom: none; }
+    .perf-name { font-size: 0.8rem; color: #cbd5e1; }
+    .perf-pct { font-size: 0.85rem; font-weight: 700; }
+
+    /* PORTFOLIO TABLE (mobile-friendly cards) */
+    .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap; }
+    .filter-btns { display: flex; gap: 6px; }
+    .filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+    }
+    .filter-btn.active { border-color: var(--gold); color: var(--gold); background: #1e2535; }
+    .add-btn {
+      background: var(--gold);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--bg);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+    }
+
+    .inv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .inv-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .inv-name { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .inv-wkn { font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+    .inv-badge {
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .inv-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .inv-stat-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+    .inv-stat-val { font-size: 0.78rem; font-weight: 600; }
+    .inv-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .inv-action-btn {
+      flex: 1;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    /* RENDITE TAB */
+    .bar-row { display: flex; align-items: center; margin-bottom: 10px; gap: 8px; }
+    .bar-name { font-size: 0.68rem; color: #94a3b8; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; width: 130px; }
+    .bar-track { flex: 1; display: flex; align-items: center; height: 20px; }
+    .bar-left { width: 50%; display: flex; justify-content: flex-end; }
+    .bar-right { width: 50%; display: flex; }
+    .bar-divider { width: 1px; height: 20px; background: #2d3748; flex-shrink: 0; }
+    .bar-fill { height: 16px; border-radius: 2px; min-width: 2px; }
+    .bar-pct { font-size: 0.72rem; font-weight: 700; width: 60px; flex-shrink: 0; }
+
+    .stat-grid-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .stat-card-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
+    .stat-card-val { font-size: 1.1rem; font-weight: 700; }
+    .stat-card-sub { font-size: 0.7rem; margin-top: 2px; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex; align-items: flex-end;
+      z-index: 200;
+    }
+    .modal {
+      background: var(--surface);
+      border: 1px solid #2d3748;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px calc(var(--safe-bottom) + 24px);
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title { font-size: 1rem; color: var(--gold); font-weight: 400; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .form-input, .form-select {
+      background: var(--bg);
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--gold); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-cancel {
+      flex: 1;
+      background: none;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      color: var(--muted);
+      padding: 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-save {
+      flex: 2;
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg);
+      padding: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Sort bar */
+    .sort-bar { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .sort-bar::-webkit-scrollbar { display: none; }
+    .sort-chip {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      padding: 4px 10px;
+      font-size: 0.6rem;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: 0.08em;
+    }
+    .sort-chip.active { border-color: var(--gold); color: var(--gold); background: #1e253520; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="header-label">Investitions-Übersicht</div>
+      <div class="header-title">Portfolio <span>Dashboard</span></div>
+    </div>
+    <div class="header-date">Stand<br>28. Feb. 2026</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showTab('dashboard')">Übersicht</button>
+  <button class="nav-btn" onclick="showTab('portfolio')">Portfolio</button>
+  <button class="nav-btn" onclick="showTab('rendite')">Rendite p.a.</button>
+</nav>
+
+<div class="content">
+  <div id="tab-dashboard"></div>
+  <div id="tab-portfolio" style="display:none"></div>
+  <div id="tab-rendite" style="display:none"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Neue Position</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="f-name" type="text" placeholder="z.B. Apple Inc." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">WKN</label>
+        <input class="form-input" id="f-wkn" type="text" placeholder="865985" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Typ</label>
+        <select class="form-select" id="f-typ">
+          <option>Aktie</option>
+          <option>ETF</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kaufdatum</label>
+        <input class="form-input" id="f-datum" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Investiert (€)</label>
+        <input class="form-input" id="f-investiert" type="number" step="0.01" placeholder="5000" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aktueller Wert (€)</label>
+        <input class="form-input" id="f-wert" type="number" step="0.01" placeholder="6200" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Verkäufe (€)</label>
+        <input class="form-input" id="f-verkaufe" type="number" step="0.01" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dividenden (€)</label>
+        <input class="form-input" id="f-dividenden" type="number" step="0.01" placeholder="0" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-save" onclick="saveForm()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TODAY = new Date('2026-02-28');
+const STORAGE_KEY = 'portfolio_data_v1';
+
+const DEFAULTS = [
+  { id:1, name:"Amazon", wkn:"906866", kaufDatum:"2023-03-10", investiert:4685, aktuellerWert:6822.90, verkaufe:3888.40, dividenden:0, typ:"Aktie" },
+  { id:2, name:"BASF", wkn:"BASF11", kaufDatum:"2019-05-20", investiert:9420.86, aktuellerWert:8991.90, verkaufe:0, dividenden:843.90, typ:"Aktie" },
+  { id:3, name:"Bayer", wkn:"BAY001", kaufDatum:"2024-11-26", investiert:4001, aktuellerWert:7156, verkaufe:0, dividenden:22, typ:"Aktie" },
+  { id:4, name:"BMW", wkn:"519000", kaufDatum:"2022-03-02", investiert:7431.40, aktuellerWert:9224, verkaufe:0, dividenden:720, typ:"Aktie" },
+  { id:5, name:"Covestro", wkn:"A40KY2", kaufDatum:"2019-01-07", investiert:5369, aktuellerWert:0, verkaufe:7254, dividenden:0, typ:"Aktie" },
+  { id:6, name:"Hapag-Lloyd AG", wkn:"HLAG47", kaufDatum:"2024-12-27", investiert:10302, aktuellerWert:8036, verkaufe:0, dividenden:410, typ:"Aktie" },
+  { id:7, name:"Heidelberg Materials", wkn:"604700", kaufDatum:"2024-07-30", investiert:6422.60, aktuellerWert:9750.40, verkaufe:5050, dividenden:227.70, typ:"Aktie" },
+  { id:8, name:"Kraft Heinz", wkn:"A14TU4", kaufDatum:"2019-02-25", investiert:2334.09, aktuellerWert:1467.30, verkaufe:0, dividenden:122.22, typ:"Aktie" },
+  { id:9, name:"Lufthansa", wkn:"910979", kaufDatum:"2020-01-01", investiert:7011.21, aktuellerWert:3280, verkaufe:375.47, dividenden:256.96, typ:"Aktie" },
+  { id:10, name:"Novartis", wkn:"907122", kaufDatum:"2021-10-04", investiert:3310, aktuellerWert:0, verkaufe:2712.50, dividenden:201.13, typ:"Aktie" },
+  { id:11, name:"Novo Nordisk AS", wkn:"A3EU6F", kaufDatum:"2025-05-19", investiert:5233.16, aktuellerWert:4529.94, verkaufe:0, dividenden:41.08, typ:"Aktie" },
+  { id:12, name:"Pfizer Inc", wkn:"852009", kaufDatum:"2025-05-09", investiert:5015, aktuellerWert:5277.50, verkaufe:0, dividenden:91.93, typ:"Aktie" },
+  { id:13, name:"RWE", wkn:"703712", kaufDatum:"2023-03-20", investiert:3769, aktuellerWert:4467, verkaufe:0, dividenden:110, typ:"Aktie" },
+  { id:14, name:"TUI", wkn:"TUAG50", kaufDatum:"2023-06-02", investiert:3070.60, aktuellerWert:0, verkaufe:3725, dividenden:0, typ:"Aktie" },
+  { id:15, name:"Netflix", wkn:"552484", kaufDatum:"2026-01-22", investiert:5000, aktuellerWert:4520.32, verkaufe:0, dividenden:0, typ:"Aktie" },
+  { id:16, name:"Spotify", wkn:"A2JEGN", kaufDatum:"2026-01-22", investiert:4983.30, aktuellerWert:5589.08, verkaufe:0, dividenden:0, typ:"Aktie" },
+  { id:17, name:"Comcast", wkn:"157484", kaufDatum:"2026-01-30", investiert:5000, aktuellerWert:5352.74, verkaufe:0, dividenden:0, typ:"Aktie" },
+  { id:18, name:"MSCI World (Rene)", wkn:"A0RPWH", kaufDatum:"2021-01-01", investiert:20000, aktuellerWert:25394.85, verkaufe:3.70, dividenden:0, typ:"ETF" },
+  { id:19, name:"VanEck Global Mining", wkn:"A2JDEJ", kaufDatum:"2022-01-01", investiert:2000, aktuellerWert:2231.80, verkaufe:15.56, dividenden:0, typ:"ETF" },
+  { id:20, name:"XTRA MSCI EM Asia", wkn:"DBX1MA", kaufDatum:"2023-01-01", investiert:800, aktuellerWert:820.73, verkaufe:50.40, dividenden:0, typ:"ETF" },
+  { id:21, name:"AIS-M EUR.ESG (Mattis)", wkn:"A2H567", kaufDatum:"2022-01-01", investiert:4800, aktuellerWert:5571.02, verkaufe:0, dividenden:0, typ:"ETF" },
+  { id:22, name:"MSCI World (Nicole)", wkn:"A0RPWH", kaufDatum:"2022-01-01", investiert:9000, aktuellerWert:11190.73, verkaufe:0, dividenden:0, typ:"ETF" },
+  { id:23, name:"S&P500 IT (Jacob)", wkn:"A142N1", kaufDatum:"2022-01-01", investiert:5500, aktuellerWert:6537.35, verkaufe:0, dividenden:0, typ:"ETF" },
+  { id:24, name:"S&P500 IT (Tristan)", wkn:"A142N1", kaufDatum:"2023-01-01", investiert:1200, aktuellerWert:1490.96, verkaufe:0, dividenden:0, typ:"ETF" },
+  { id:25, name:"S&P500 IT (Lotta)", wkn:"A142N1", kaufDatum:"2025-12-28", investiert:966.33, aktuellerWert:966.33, verkaufe:0, dividenden:0, typ:"ETF" },
+  { id:26, name:"Emerging Markets", wkn:"A12GVR", kaufDatum:"2024-01-01", investiert:200, aktuellerWert:201.22, verkaufe:0, dividenden:0, typ:"ETF" },
+];
+
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || DEFAULTS;
+let filterTyp = 'Alle';
+let sortKey = 'paPct';
+let sortAsc = false;
+let editId = null;
+let activeTab = 'dashboard';
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function calcYears(d) { return (TODAY - new Date(d)) / (1000*60*60*24*365.25); }
+
+function enrich(inv) {
+  const total = inv.aktuellerWert + inv.verkaufe + inv.dividenden;
+  const gesamtPct = inv.investiert > 0 ? (total - inv.investiert) / inv.investiert * 100 : 0;
+  const years = calcYears(inv.kaufDatum);
+  const paPct = inv.investiert > 0 && years > 0.05
+    ? (Math.pow(total / inv.investiert, 1 / years) - 1) * 100
+    : gesamtPct;
+  return { ...inv, total, gesamtPct, paPct, years };
+}
+
+const fmt = n => (n || 0).toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+const fmtPct = n => (n >= 0 ? '+' : '') + (n || 0).toFixed(1) + '%';
+const col = n => n >= 0 ? 'var(--green)' : 'var(--red)';
+
+function getEnriched() { return data.map(enrich); }
+
+function stats(list) {
+  return {
+    investiert: list.reduce((s,i) => s+i.investiert, 0),
+    aktuellerWert: list.reduce((s,i) => s+i.aktuellerWert, 0),
+    verkaufe: list.reduce((s,i) => s+i.verkaufe, 0),
+    dividenden: list.reduce((s,i) => s+i.dividenden, 0),
+  };
+}
+
+/* ---- DASHBOARD ---- */
+function renderDashboard() {
+  const enriched = getEnriched();
+  const aktien = enriched.filter(i => i.typ === 'Aktie');
+  const etfs = enriched.filter(i => i.typ === 'ETF');
+  const all = stats(enriched);
+  const totalRet = all.aktuellerWert + all.verkaufe + all.dividenden;
+  const totalPct = all.investiert > 0 ? (totalRet - all.investiert) / all.investiert * 100 : 0;
+
+  const top3 = [...enriched].sort((a,b) => b.paPct - a.paPct).slice(0,3);
+  const bot3 = [...enriched].sort((a,b) => a.paPct - b.paPct).slice(0,3);
+
+  function splitCard(title, list, color) {
+    const s = stats(list);
+    const ret = s.aktuellerWert + s.verkaufe + s.dividenden;
+    const pct = s.investiert > 0 ? (ret - s.investiert) / s.investiert * 100 : 0;
+    return `<div class="split-card">
+      <div class="split-title" style="color:${color}">${title} <span style="font-size:0.65rem;color:var(--muted);font-weight:400">${list.length} Pos.</span></div>
+      <div class="split-row"><span class="split-row-label">Investiert</span><span class="split-row-val">${fmt(s.investiert)}</span></div>
+      <div class="split-row"><span class="split-row-label">Aktuell</span><span class="split-row-val">${fmt(s.aktuellerWert)}</span></div>
+      <div class="split-row"><span class="split-row-label">Dividenden</span><span class="split-row-val" style="color:var(--gold)">${fmt(s.dividenden)}</span></div>
+      <div class="split-row"><span class="split-row-label">Rendite</span><span class="split-row-val" style="color:${col(pct)}">${fmtPct(pct)}</span></div>
+    </div>`;
+  }
+
+  function perfRows(list, c) {
+    return list.map(i => `<div class="perf-row">
+      <span class="perf-name">${i.name}</span>
+      <span class="perf-pct" style="color:${c}">${fmtPct(i.paPct)}</span>
+    </div>`).join('');
+  }
+
+  document.getElementById('tab-dashboard').innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:var(--blue)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue)"></div>
+        <div class="kpi-label">Investiert</div>
+        <div class="kpi-value" style="color:var(--blue)">${fmt(all.investiert)}</div>
+        <div class="kpi-sub">Gesamteinsatz</div>
+      </div>
+      <div class="kpi-card">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
+        <div class="kpi-label">Depotwert</div>
+        <div class="kpi-value" style="color:var(--green)">${fmt(all.aktuellerWert)}</div>
+        <div class="kpi-sub">Aktuell</div>
+      </div>
+      <div class="kpi-card">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${col(totalPct)}"></div>
+        <div class="kpi-label">Gewinn/Verlust</div>
+        <div class="kpi-value" style="color:${col(totalPct)}">${fmt(totalRet - all.investiert)}</div>
+        <div class="kpi-sub">${fmtPct(totalPct)} gesamt</div>
+      </div>
+      <div class="kpi-card">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <div class="kpi-label">Dividenden</div>
+        <div class="kpi-value" style="color:var(--gold)">${fmt(all.dividenden)}</div>
+        <div class="kpi-sub">Ausschüttungen</div>
+      </div>
+    </div>
+
+    <div class="split-grid">
+      ${splitCard('Aktien', aktien, 'var(--purple)')}
+      ${splitCard('ETFs', etfs, 'var(--orange)')}
+    </div>
+
+    <div class="perf-card">
+      <div class="perf-title" style="color:var(--green)">▲ Top Performer (p.a.)</div>
+      ${perfRows(top3, 'var(--green)')}
+    </div>
+    <div class="perf-card">
+      <div class="perf-title" style="color:var(--red)">▼ Underperformer (p.a.)</div>
+      ${perfRows(bot3, 'var(--red)')}
+    </div>
+  `;
+}
+
+/* ---- PORTFOLIO ---- */
+function renderPortfolio() {
+  let list = getEnriched();
+  if (filterTyp !== 'Alle') list = list.filter(i => i.typ === filterTyp);
+  list.sort((a,b) => sortAsc ? a[sortKey]-b[sortKey] : b[sortKey]-a[sortKey]);
+
+  const sortChips = [
+    ['paPct','Rendite p.a.'],['gesamtPct','Gesamt %'],
+    ['investiert','Investiert'],['aktuellerWert','Wert'],['name','Name']
+  ].map(([k,l]) => `<button class="sort-chip ${sortKey===k?'active':''}" onclick="setSort('${k}')">${l}${sortKey===k?(sortAsc?' ↑':' ↓'):''}</button>`).join('');
+
+  const cards = list.map(inv => {
+    const badge = inv.typ === 'ETF'
+      ? `<span class="inv-badge" style="background:#fb923c22;color:var(--orange)">ETF</span>`
+      : `<span class="inv-badge" style="background:#818cf822;color:var(--purple)">Aktie</span>`;
+    return `<div class="inv-card">
+      <div class="inv-card-header">
+        <div>
+          <div class="inv-name">${inv.name}</div>
+          <div class="inv-wkn">${inv.wkn} · ${inv.years.toFixed(1)} Jahre</div>
+        </div>
+        ${badge}
+      </div>
+      <div class="inv-stats">
+        <div>
+          <div class="inv-stat-label">Investiert</div>
+          <div class="inv-stat-val" style="color:var(--muted)">${fmt(inv.investiert)}</div>
+        </div>
+        <div>
+          <div class="inv-stat-label">Akt. Wert</div>
+          <div class="inv-stat-val">${inv.aktuellerWert > 0 ? fmt(inv.aktuellerWert) : '<span style="color:var(--muted)">—</span>'}</div>
+        </div>
+        <div>
+          <div class="inv-stat-label">Dividenden</div>
+          <div class="inv-stat-val" style="color:var(--gold)">${inv.dividenden > 0 ? fmt(inv.dividenden) : '—'}</div>
+        </div>
+        <div>
+          <div class="inv-stat-label">Gesamt</div>
+          <div class="inv-stat-val" style="color:${col(inv.gesamtPct)};font-size:0.85rem">${fmtPct(inv.gesamtPct)}</div>
+        </div>
+        <div>
+          <div class="inv-stat-label">p.a.</div>
+          <div class="inv-stat-val" style="color:${col(inv.paPct)};font-size:0.9rem;font-weight:800">${fmtPct(inv.paPct)}</div>
+        </div>
+        <div>
+          <div class="inv-stat-label">Verkäufe</div>
+          <div class="inv-stat-val" style="color:var(--muted)">${inv.verkaufe > 0 ? fmt(inv.verkaufe) : '—'}</div>
+        </div>
+      </div>
+      <div class="inv-actions">
+        <button class="inv-action-btn" onclick="openEdit(${inv.id})">✏ Bearbeiten</button>
+        <button class="inv-action-btn" onclick="deleteItem(${inv.id})" style="color:var(--red)">✕ Löschen</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tab-portfolio').innerHTML = `
+    <div class="filter-row">
+      <div class="filter-btns">
+        ${['Alle','Aktie','ETF'].map(t => `<button class="filter-btn ${filterTyp===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('')}
+      </div>
+      <button class="add-btn" onclick="openNew()">+ Hinzufügen</button>
+    </div>
+    <div class="sort-bar">${sortChips}</div>
+    ${cards}
+  `;
+}
+
+/* ---- RENDITE ---- */
+function renderRendite() {
+  const enriched = getEnriched();
+  const sorted = [...enriched].sort((a,b) => b.paPct - a.paPct);
+  const maxAbs = Math.max(...sorted.map(i => Math.abs(i.paPct)), 20);
+
+  const bars = sorted.map(inv => {
+    const clipped = Math.max(-maxAbs, Math.min(maxAbs, inv.paPct));
+    const barW = Math.abs(clipped) / maxAbs * 100;
+    const isPos = inv.paPct >= 0;
+    return `<div class="bar-row">
+      <div class="bar-name">${inv.name}</div>
+      <div class="bar-track">
+        <div class="bar-left">${!isPos ? `<div class="bar-fill" style="width:${barW}%;background:var(--red)"></div>` : ''}</div>
+        <div class="bar-divider"></div>
+        <div class="bar-right">${isPos ? `<div class="bar-fill" style="width:${barW}%;background:var(--green)"></div>` : ''}</div>
+      </div>
+      <div class="bar-pct" style="color:${col(inv.paPct)}">${fmtPct(inv.paPct)}</div>
+    </div>`;
+  }).join('');
+
+  const aktien = enriched.filter(i => i.typ==='Aktie');
+  const etfs = enriched.filter(i => i.typ==='ETF');
+  const avgAktien = aktien.reduce((s,i) => s+i.paPct, 0) / aktien.length;
+  const avgEtfs = etfs.reduce((s,i) => s+i.paPct, 0) / etfs.length;
+  const best = sorted[0];
+
+  document.getElementById('tab-rendite').innerHTML = `
+    <div style="font-size:0.65rem;color:var(--muted);margin-bottom:16px;line-height:1.5">
+      Annualisierte Rendite (CAGR) = Aktueller Wert + Verkäufe + Dividenden vs. Investiertes Kapital
+    </div>
+    <div class="perf-card" style="padding:20px 16px">
+      ${bars}
+    </div>
+    <div class="stat-grid-3">
+      <div class="stat-card">
+        <div class="stat-card-label">Ø Aktien p.a.</div>
+        <div class="stat-card-val" style="color:var(--purple)">${fmtPct(avgAktien)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Ø ETFs p.a.</div>
+        <div class="stat-card-val" style="color:var(--orange)">${fmtPct(avgEtfs)}</div>
+      </div>
+      <div class="stat-card" style="grid-column:1/-1">
+        <div class="stat-card-label">Beste Position</div>
+        <div class="stat-card-val" style="color:var(--green)">${best?.name}</div>
+        <div class="stat-card-sub" style="color:var(--green)">${fmtPct(best?.paPct)} p.a.</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---- NAV ---- */
+function showTab(tab) {
+  activeTab = tab;
+  ['dashboard','portfolio','rendite'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ['dashboard','portfolio','rendite'][i] === tab);
+  });
+  renderActive();
+}
+
+function renderActive() {
+  if (activeTab === 'dashboard') renderDashboard();
+  else if (activeTab === 'portfolio') renderPortfolio();
+  else renderRendite();
+}
+
+/* ---- FILTER / SORT ---- */
+function setFilter(typ) { filterTyp = typ; renderPortfolio(); }
+function setSort(key) {
+  if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = false; }
+  renderPortfolio();
+}
+
+/* ---- MODAL ---- */
+function openNew() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Neue Position';
+  ['name','wkn','datum','investiert','wert','verkaufe','dividenden'].forEach(k => document.getElementById('f-'+k).value = '');
+  document.getElementById('f-typ').value = 'Aktie';
+  document.getElementById('f-datum').value = new Date().toISOString().slice(0,10);
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function openEdit(id) {
+  const inv = data.find(i => i.id === id);
+  if (!inv) return;
+  editId = id;
+  document.getElementById('modal-title').textContent = 'Position bearbeiten';
+  document.getElementById('f-name').value = inv.name;
+  document.getElementById('f-wkn').value = inv.wkn;
+  document.getElementById('f-typ').value = inv.typ;
+  document.getElementById('f-datum').value = inv.kaufDatum;
+  document.getElementById('f-investiert').value = inv.investiert;
+  document.getElementById('f-wert').value = inv.aktuellerWert;
+  document.getElementById('f-verkaufe').value = inv.verkaufe;
+  document.getElementById('f-dividenden').value = inv.dividenden;
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeModalOnBg(e) { if (e.target.id === 'modal') closeModal(); }
+
+function saveForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const datum = document.getElementById('f-datum').value;
+  if (!name || !datum) return;
+  const entry = {
+    name,
+    wkn: document.getElementById('f-wkn').value.trim(),
+    typ: document.getElementById('f-typ').value,
+    kaufDatum: datum,
+    investiert: parseFloat(document.getElementById('f-investiert').value) || 0,
+    aktuellerWert: parseFloat(document.getElementById('f-wert').value) || 0,
+    verkaufe: parseFloat(document.getElementById('f-verkaufe').value) || 0,
+    dividenden: parseFloat(document.getElementById('f-dividenden').value) || 0,
+  };
+  if (editId) {
+    data = data.map(i => i.id === editId ? { ...entry, id: editId } : i);
+  } else {
+    data.push({ ...entry, id: Date.now() });
+  }
+  save();
+  closeModal();
+  renderActive();
+}
+
+function deleteItem(id) {
+  if (!confirm('Position löschen?')) return;
+  data = data.filter(i => i.id !== id);
+  save();
+  renderPortfolio();
+}
+
+/* ---- INIT ---- */
+renderDashboard();
+</script>
+</body>
+</html>
