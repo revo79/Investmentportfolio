@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Fetch prices & update index.html
         env:
@@ -25,7 +28,8 @@ jobs:
         run: |
           git config user.name "Portfolio Bot"
           git config user.email "bot@portfolio"
-          git pull --rebase origin main
+          git fetch origin main
+          git reset --soft origin/main
           git add index.html
           git diff --staged --quiet || git commit -m "Auto-Update Kurse $(date '+%d.%m.%Y %H:%M')"
-          git push
+          git push origin main
