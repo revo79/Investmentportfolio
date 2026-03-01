@@ -15,9 +15,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fetch prices & update index.html
-        env:
-          FMP_KEY: ${{ secrets.FMP_KEY }}
-        run: python3 update_prices.py
+        run: |
+          pip install yfinance --break-system-packages
+          python3 update_prices.py
 
       - name: Commit updated prices
         run: |
