@@ -5,6 +5,10 @@ on:
     - cron: '0 18 * * 1-5'
   workflow_dispatch:
 
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
