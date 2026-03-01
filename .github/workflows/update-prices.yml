@@ -33,7 +33,11 @@ jobs:
         run: |
           git config user.name "Portfolio Bot"
           git config user.email "bot@portfolio"
+          git fetch origin main
+          git reset --hard origin/main
+          git checkout -- .
+          python3 update_prices.py
           git add index.html
           git diff --staged --quiet && echo "No changes" && exit 0
           git commit -m "Auto-Update Kurse $(date '+%d.%m.%Y %H:%M')"
-          git push --force-with-lease origin main
+          git push --force origin main
